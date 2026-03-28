@@ -166,16 +166,17 @@ function initScrollAnimation() {
   const isMobile = window.innerWidth <= 768;
   const blurHideProgress = isMobile ? 0.18 : 0.3;
   let autoTriggered = false;
-  let heroTl = null; /* ✅ 데스크톱 tl kill용 */
+  let heroTl = null;
 
-  /* =====================================================
-     공통: 60% 도달 시 자동 슈우웅
-     ===================================================== */
+  // ✅ 핵심: 스케일 값 직접 추적 (핸드오프 시 점프 방지)
+  let mobileCircleScale = 0;
+  // ✅ 핵심: quickSetter - scroll 이벤트용 최적화 API (gsap.set보다 훨씬 빠름)
+  const quickSetScale = gsap.quickSetter(expandingCircle, 'scale');
+
   function triggerAutoExpand() {
     if (autoTriggered) return;
     autoTriggered = true;
 
-    /* ✅ 데스크톱: scrub tl 즉시 kill → gsap.fromTo와 충돌 방지 */
     if (heroTl) {
       if (heroTl.scrollTrigger) heroTl.scrollTrigger.kill();
       heroTl.kill();
@@ -187,15 +188,17 @@ function initScrollAnimation() {
       blurtext.style.visibility = 'hidden';
     }
 
-    /* ✅ 현재 scale에서 바로 이어서 시작 - 멈춤 없이 슈우웅 */
-    const currentScale = gsap.getProperty(expandingCircle, 'scale') || 0;
+    // ✅ 추적한 변수로 fromScale 설정 → 현재 위치에서 부드럽게 이어짐
+    const fromScale = isMobile
+      ? mobileCircleScale
+      : gsap.getProperty(expandingCircle, 'scale') || 0;
 
     gsap.fromTo(
       expandingCircle,
-      { scale: currentScale },
+      { scale: fromScale },
       {
-        scale: isMobile ? 18 : 90,
-        duration: 1.0,
+        scale: isMobile ? 22 : 90,
+        duration: isMobile ? 0.75 : 1.0,
         ease: 'power2.in',
         force3D: true,
         overwrite: true,
@@ -216,23 +219,19 @@ function initScrollAnimation() {
               waveLetters.style.visibility = 'visible';
             }, 600);
           }
-          gsap.to(window, {
-            scrollTo: window.scrollY + ch * 0.5,
-            duration: 1.4,
-            ease: 'power2.inOut',
-          });
+          // ✅ 모바일에서는 scrollTo 제거 - 사용자 스크롤 방해하지 않음
+          if (!isMobile) {
+            gsap.to(window, {
+              scrollTo: window.scrollY + ch * 0.5,
+              duration: 1.4,
+              ease: 'power2.inOut',
+            });
+          }
         },
       },
     );
   }
 
-  /* =====================================================
-     ✅ 모바일: pin 완전 제거 + native scroll 이벤트로 대체
-        .hero-content { position: fixed } 가 이미 화면 고정
-        → GSAP pin 없어도 시각적으로 완전히 동일
-        → iOS 모멘텀 스크롤 충돌 없음 → 부드럽게 스크롤 가능
-        → 원형은 scroll 이벤트로 직접 scale 제어
-     ===================================================== */
   if (isMobile) {
     const heroHeight = heroIntro.offsetHeight;
     const heroTop = heroIntro.offsetTop;
@@ -263,16 +262,13 @@ function initScrollAnimation() {
           progress > blurHideProgress ? 'hidden' : 'visible';
       }
 
-      /* ✅ 원형 직접 제어 - progress 0→0.6 동안 scale 0→12 */
+      // ✅ quickSetter: RAF와 동기화, 오버헤드 없음 → 버벅임 완전 제거
       if (!autoTriggered) {
-        const circleScale = (progress / 0.6) * 12;
-        gsap.set(expandingCircle, {
-          scale: Math.min(circleScale, 12),
-          force3D: true,
-        });
+        const targetScale = (progress / 0.6) * 12;
+        mobileCircleScale = Math.min(targetScale, 12);
+        quickSetScale(mobileCircleScale);
       }
 
-      /* ✅ 60% 도달 → 자동 슈우웅 */
       if (progress >= 0.6 && !autoTriggered) {
         triggerAutoExpand();
       }
@@ -297,13 +293,14 @@ function initScrollAnimation() {
 
     window.addEventListener('scroll', onMobileScroll, { passive: true });
 
-    /* 히어로 다시 돌아오면 상태 리셋 */
     ScrollTrigger.create({
       trigger: heroIntro,
       start: 'top 10%',
       onEnterBack: () => {
         autoTriggered = false;
-        gsap.set(expandingCircle, { scale: 0 });
+        // ✅ 리셋 시 추적 변수도 초기화
+        mobileCircleScale = 0;
+        quickSetScale(0);
         expandingCircle.classList.remove('show');
         if (blurtext) {
           blurtext.style.opacity = '1';
@@ -330,11 +327,7 @@ function initScrollAnimation() {
       });
     }
 
-    /* =====================================================
-     ✅ 데스크톱: 기존 pin + scrub 유지
-     ===================================================== */
   } else {
-    /* ✅ heroTl 변수로 선언 - triggerAutoExpand에서 kill 가능 */
     heroTl = gsap.timeline({
       scrollTrigger: {
         trigger: heroIntro,
@@ -347,6 +340,7 @@ function initScrollAnimation() {
         onEnterBack: () => {
           autoTriggered = false;
           heroTl = null;
+          mobileCircleScale = 0;
           gsap.set(expandingCircle, { scale: 0 });
           expandingCircle.classList.remove('show');
           if (blurtext) {
@@ -625,36 +619,9 @@ var lineEq = function (y2, y1, x2, x1, currentVal) {
   return m * currentVal + (y1 - m * x1);
 };
 var chars = [
-  'a',
-  'b',
-  'c',
-  'd',
-  'e',
-  'f',
-  'g',
-  'h',
-  'i',
-  'j',
-  'k',
-  'l',
-  'm',
-  'n',
-  'o',
-  'p',
-  'q',
-  'r',
-  's',
-  't',
-  'u',
-  'v',
-  'w',
-  'x',
-  'y',
-  'z',
-  '.',
-  ':',
-  '',
-  '^',
+  'a','b','c','d','e','f','g','h','i','j','k','l','m',
+  'n','o','p','q','r','s','t','u','v','w','x','y','z',
+  '.', ':', '', '^',
 ];
 var charsTotal = chars.length;
 
@@ -824,27 +791,16 @@ class Slide {
     this.DOM.el.classList.add('slide--visible');
     this.position(isContentOpen ? 4 : 3);
   }
-  isPositionedRight() {
-    return this.isRight;
-  }
-  isPositionedLeft() {
-    return this.isLeft;
-  }
-  isPositionedCenter() {
-    return this.isCurrent;
-  }
+  isPositionedRight() { return this.isRight; }
+  isPositionedLeft() { return this.isLeft; }
+  isPositionedCenter() { return this.isCurrent; }
   reset() {
     this.isRight = this.isLeft = this.isCurrent = false;
     this.DOM.el.className = 'slide';
   }
   hide() {
     gsap.set(this.DOM.imgWrap, {
-      x: 0,
-      y: 0,
-      rotationX: 0,
-      rotationY: 0,
-      rotationZ: 0,
-      opacity: 0,
+      x: 0, y: 0, rotationX: 0, rotationY: 0, rotationZ: 0, opacity: 0,
     });
   }
   moveToPosition(settings) {
@@ -939,13 +895,7 @@ class Content {
       startAt: { opacity: 0, x: -50 },
     });
     gsap.to(
-      [
-        this.DOM.number,
-        this.DOM.title,
-        this.DOM.subtitle,
-        this.DOM.info,
-        this.DOM.buttons,
-      ],
+      [this.DOM.number, this.DOM.title, this.DOM.subtitle, this.DOM.info, this.DOM.buttons],
       {
         duration: 0.8,
         ease: 'power4.out',
@@ -957,9 +907,7 @@ class Content {
     );
     var projectName = this.DOM.title.textContent;
     document
-      .querySelectorAll(
-        '.content .marquee-track--left, .content .marquee-track--right',
-      )
+      .querySelectorAll('.content .marquee-track--left, .content .marquee-track--right')
       .forEach(function (track) {
         track.innerHTML = Array(20)
           .fill('<span>' + projectName + '</span>')
@@ -976,20 +924,8 @@ class Content {
     }
     this.DOM.el.classList.remove('content__item--current');
     gsap.to(
-      [
-        this.DOM.image,
-        this.DOM.number,
-        this.DOM.title,
-        this.DOM.subtitle,
-        this.DOM.info,
-        this.DOM.buttons,
-      ].reverse(),
-      {
-        duration: 0.3,
-        ease: 'power3.in',
-        opacity: 0,
-        stagger: 0.01,
-      },
+      [this.DOM.image, this.DOM.number, this.DOM.title, this.DOM.subtitle, this.DOM.info, this.DOM.buttons].reverse(),
+      { duration: 0.3, ease: 'power3.in', opacity: 0, stagger: 0.01 },
     );
     var marquee = document.querySelector('.content .marquee-wrap');
     if (marquee) marquee.style.opacity = '0';
@@ -1019,13 +955,9 @@ class Slideshow {
   render() {
     this.currentSlide = this.slides[this.current];
     this.nextSlide =
-      this.slides[
-        this.current + 1 <= this.slidesTotal - 1 ? this.current + 1 : 0
-      ];
+      this.slides[this.current + 1 <= this.slidesTotal - 1 ? this.current + 1 : 0];
     this.prevSlide =
-      this.slides[
-        this.current - 1 >= 0 ? this.current - 1 : this.slidesTotal - 1
-      ];
+      this.slides[this.current - 1 >= 0 ? this.current - 1 : this.slidesTotal - 1];
     this.currentSlide.setCurrent();
     this.nextSlide.setRight();
     this.prevSlide.setLeft();
@@ -1107,20 +1039,13 @@ class Slideshow {
     if (!this.isContentOpen || this.isAnimating) return;
     this.DOM.el.classList.remove('slideshow--previewopen');
     this.contents[this.current].hide();
-    gsap.to(this.DOM.closeCtrl, {
-      duration: 0.3,
-      ease: 'power3.in',
-      opacity: 0,
-    });
+    gsap.to(this.DOM.closeCtrl, { duration: 0.3, ease: 'power3.in', opacity: 0 });
     this.DOM.closeCtrl.style.pointerEvents = 'none';
     if (winsize.width > 768 && this.DOM.deco) {
       gsap.to(this.DOM.deco, {
         duration: 0.8,
         ease: 'power4.inOut',
-        scaleX: 1,
-        scaleY: 1,
-        x: 0,
-        y: 0,
+        scaleX: 1, scaleY: 1, x: 0, y: 0,
       });
     }
     this.prevSlide.moveToPosition({ position: -1 });
@@ -1140,12 +1065,7 @@ class Slideshow {
       x: direction === 'next' ? -40 : 40,
       y: direction === 'next' ? -40 : 40,
       onComplete: () =>
-        gsap.to(this.DOM.deco, {
-          duration: 0.6,
-          ease: 'power2.out',
-          x: 0,
-          y: 0,
-        }),
+        gsap.to(this.DOM.deco, { duration: 0.6, ease: 'power2.out', x: 0, y: 0 }),
     });
   }
   navigate(direction) {
@@ -1179,9 +1099,7 @@ class Slideshow {
         position: direction === 'next' ? -2 : 0,
         delay: direction === 'next' ? d1 : d3,
       })
-      .then(() => {
-        if (direction === 'next') this.prevSlide.hide();
-      });
+      .then(() => { if (direction === 'next') this.prevSlide.hide(); });
     this.currentSlide.moveToPosition({
       position: direction === 'next' ? -1 : 1,
       delay: d2,
@@ -1193,9 +1111,7 @@ class Slideshow {
         position: direction === 'next' ? 0 : 2,
         delay: direction === 'next' ? d3 : d1,
       })
-      .then(() => {
-        if (direction === 'prev') this.nextSlide.hide();
-      });
+      .then(() => { if (direction === 'prev') this.nextSlide.hide(); });
     if (direction === 'next') this.nextSlide.showTexts();
     else this.prevSlide.showTexts();
     this.upcomingSlide
@@ -1205,9 +1121,7 @@ class Slideshow {
         delay: d4,
       })
       .then(() => {
-        [this.nextSlide, this.currentSlide, this.prevSlide].forEach((s) =>
-          s.reset(),
-        );
+        [this.nextSlide, this.currentSlide, this.prevSlide].forEach((s) => s.reset());
         this.render();
         allowTilt = true;
         this.isAnimating = false;
@@ -1216,15 +1130,13 @@ class Slideshow {
 }
 
 function createSlideshowWithVideoEvents() {
-  document
-    .querySelectorAll('.content__item-image video')
-    .forEach(function (video) {
-      var source = video.querySelector('source');
-      if (source && source.dataset.src && !source.src) {
-        source.src = source.dataset.src;
-        video.load();
-      }
-    });
+  document.querySelectorAll('.content__item-image video').forEach(function (video) {
+    var source = video.querySelector('source');
+    if (source && source.dataset.src && !source.src) {
+      source.src = source.dataset.src;
+      video.load();
+    }
+  });
   slideshow = new Slideshow(document.querySelector('.slideshow'));
 }
 
@@ -1261,18 +1173,10 @@ function initIllustrationScroll() {
       item.addEventListener('click', function () {
         if (item.classList.contains('active')) {
           item.classList.remove('active');
-          gsap.to(img, {
-            filter: 'grayscale(100%)',
-            duration: 0.4,
-            ease: 'power2.out',
-          });
+          gsap.to(img, { filter: 'grayscale(100%)', duration: 0.4, ease: 'power2.out' });
         } else {
           item.classList.add('active');
-          gsap.to(img, {
-            filter: 'grayscale(0%)',
-            duration: 0.4,
-            ease: 'power2.out',
-          });
+          gsap.to(img, { filter: 'grayscale(0%)', duration: 0.4, ease: 'power2.out' });
         }
       });
     });
@@ -1297,24 +1201,14 @@ function initIllustrationScroll() {
   items.forEach(function (item) {
     item.addEventListener('mouseenter', function () {
       gsap.to(item, {
-        scale: 1.1,
-        rotationY: 5,
-        rotationX: -3,
-        duration: 0.4,
-        ease: 'power2.out',
-        zIndex: 10,
-        overwrite: 'auto',
+        scale: 1.1, rotationY: 5, rotationX: -3,
+        duration: 0.4, ease: 'power2.out', zIndex: 10, overwrite: 'auto',
       });
     });
     item.addEventListener('mouseleave', function () {
       gsap.to(item, {
-        scale: 1,
-        rotationY: 0,
-        rotationX: 0,
-        duration: 0.4,
-        ease: 'power2.out',
-        zIndex: 1,
-        overwrite: 'auto',
+        scale: 1, rotationY: 0, rotationX: 0,
+        duration: 0.4, ease: 'power2.out', zIndex: 1, overwrite: 'auto',
       });
     });
   });
@@ -1389,11 +1283,7 @@ function initNewIntroAnimation() {
       if (verticalLine) {
         setTimeout(() => {
           verticalLine.classList.add('revealed');
-          gsap.to(verticalLine, {
-            height: '60%',
-            duration: 0.8,
-            ease: 'power2.out',
-          });
+          gsap.to(verticalLine, { height: '60%', duration: 0.8, ease: 'power2.out' });
         }, 500);
       }
       setTimeout(() => {
@@ -1431,7 +1321,7 @@ var allowTilt = true;
 var slideshow;
 
 function init() {
-  if (expandingCircle) gsap.set(expandingCircle, { scale: 0 });
+  if (expandingCircle) gsap.set(expandingCircle, { scale: 0, force3D: true });
   if (waveSvg) gsap.set(waveSvg, { opacity: 0, visibility: 'hidden' });
   if (waveLetters) gsap.set(waveLetters, { opacity: 0, visibility: 'hidden' });
   if (blurtext) {
@@ -1459,23 +1349,14 @@ function init() {
       end: 'bottom top',
       onEnter: function () {
         projectsSection.classList.add('active');
-        if (illWrap) {
-          illWrap.style.opacity = '0';
-          illWrap.style.visibility = 'hidden';
-        }
+        if (illWrap) { illWrap.style.opacity = '0'; illWrap.style.visibility = 'hidden'; }
         if (!slideshow) createSlideshowWithVideoEvents();
       },
       onLeave: () => {
-        if (illWrap) {
-          illWrap.style.opacity = '0';
-          illWrap.style.visibility = 'hidden';
-        }
+        if (illWrap) { illWrap.style.opacity = '0'; illWrap.style.visibility = 'hidden'; }
       },
       onEnterBack: () => {
-        if (illWrap) {
-          illWrap.style.opacity = '0';
-          illWrap.style.visibility = 'hidden';
-        }
+        if (illWrap) { illWrap.style.opacity = '0'; illWrap.style.visibility = 'hidden'; }
       },
     });
   }
@@ -1504,20 +1385,13 @@ window.addEventListener(
 (function () {
   var cursor = document.querySelector('.cursor');
   if (!cursor) return;
-  var mouseX = 0,
-    mouseY = 0,
-    cursorX = 0,
-    cursorY = 0;
+  var mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
   var cursorSpeed = 0.15;
   var cursorRafId = null;
-  window.addEventListener(
-    'mousemove',
-    function (e) {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    },
-    { passive: true },
-  );
+  window.addEventListener('mousemove', function (e) {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  }, { passive: true });
   function animateCursor() {
     cursorX += (mouseX - cursorX) * cursorSpeed;
     cursorY += (mouseY - cursorY) * cursorSpeed;
@@ -1529,19 +1403,13 @@ window.addEventListener(
   var animateit = function (e) {
     var span = this.querySelector(':scope > span');
     if (!span) return;
-    var x = e.offsetX,
-      y = e.offsetY;
-    var w = this.offsetWidth,
-      h = this.offsetHeight;
+    var x = e.offsetX, y = e.offsetY;
+    var w = this.offsetWidth, h = this.offsetHeight;
     var move = 25;
     span.style.transform =
       e.type === 'mouseleave'
         ? ''
-        : 'translate(' +
-          ((x / w) * move * 2 - move) +
-          'px,' +
-          ((y / h) * move * 2 - move) +
-          'px)';
+        : 'translate(' + ((x / w) * move * 2 - move) + 'px,' + ((y / h) * move * 2 - move) + 'px)';
   };
   var interactiveEls = Array.from(
     document.querySelectorAll('a, button, .slide__img-wrap, .nav'),
@@ -1571,19 +1439,13 @@ window.addEventListener(
   var animateMenuLink = function (e) {
     var span = this.querySelector('span');
     if (!span) return;
-    var x = e.offsetX,
-      y = e.offsetY;
-    var w = this.offsetWidth,
-      h = this.offsetHeight;
+    var x = e.offsetX, y = e.offsetY;
+    var w = this.offsetWidth, h = this.offsetHeight;
     var move = 25;
     span.style.transform =
       e.type === 'mouseleave'
         ? ''
-        : 'translate(' +
-          ((x / w) * (move * 2) - move) +
-          'px, ' +
-          ((y / h) * (move * 2) - move) +
-          'px)';
+        : 'translate(' + ((x / w) * (move * 2) - move) + 'px, ' + ((y / h) * (move * 2) - move) + 'px)';
   };
   menuToggle.addEventListener('change', function () {
     document.body.classList.toggle('menu-open', this.checked);
@@ -1656,26 +1518,17 @@ function triggerSkillAnimation() {
   });
 }
 
-/* ✅ 화살표: !important로 CSS active 규칙 완전 차단 */
 function updateNavigation() {
   var isFirst = currentPage === 0;
   var isLast = currentPage === totalPages - 1;
 
   prevBtn.style.setProperty('opacity', isFirst ? '0' : '1', 'important');
-  prevBtn.style.setProperty(
-    'visibility',
-    isFirst ? 'hidden' : 'visible',
-    'important',
-  );
+  prevBtn.style.setProperty('visibility', isFirst ? 'hidden' : 'visible', 'important');
   prevBtn.style.pointerEvents = isFirst ? 'none' : 'auto';
 
   nextBtn.classList.toggle('hint-float', isFirst);
   nextBtn.style.setProperty('opacity', isLast ? '0' : '1', 'important');
-  nextBtn.style.setProperty(
-    'visibility',
-    isLast ? 'hidden' : 'visible',
-    'important',
-  );
+  nextBtn.style.setProperty('visibility', isLast ? 'hidden' : 'visible', 'important');
   nextBtn.style.pointerEvents = isLast ? 'none' : 'auto';
 
   wrapper.style.transform = 'translateX(' + -currentPage * 100 + 'vw)';
@@ -1700,38 +1553,28 @@ nextBtn.addEventListener('click', function () {
 
 (function () {
   if (!wrapper) return;
-  var startX = 0,
-    startY = 0,
+  var startX = 0, startY = 0, isDragging = false;
+  wrapper.addEventListener('touchstart', function (e) {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    isDragging = true;
+  }, { passive: true });
+  wrapper.addEventListener('touchend', function (e) {
+    if (!isDragging) return;
     isDragging = false;
-  wrapper.addEventListener(
-    'touchstart',
-    function (e) {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      isDragging = true;
-    },
-    { passive: true },
-  );
-  wrapper.addEventListener(
-    'touchend',
-    function (e) {
-      if (!isDragging) return;
-      isDragging = false;
-      var dx = e.changedTouches[0].clientX - startX;
-      var dy = e.changedTouches[0].clientY - startY;
-      if (Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      if (Math.abs(dx) < 40) return;
-      if (dx < 0 && currentPage < totalPages - 1) {
-        currentPage++;
-        updateNavigation();
-      }
-      if (dx > 0 && currentPage > 0) {
-        currentPage--;
-        updateNavigation();
-      }
-    },
-    { passive: true },
-  );
+    var dx = e.changedTouches[0].clientX - startX;
+    var dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (Math.abs(dx) < 40) return;
+    if (dx < 0 && currentPage < totalPages - 1) {
+      currentPage++;
+      updateNavigation();
+    }
+    if (dx > 0 && currentPage > 0) {
+      currentPage--;
+      updateNavigation();
+    }
+  }, { passive: true });
 })();
 
 document.addEventListener('keydown', function (e) {
