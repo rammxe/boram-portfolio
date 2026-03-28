@@ -1181,11 +1181,9 @@ body.menu-open {
 }
 
 /* ========== ABOUT SECTION ========== */
-/* ✅ background: #000 추가 - hero-content/wave 비침 완전 차단 */
 .about-scroll-wrap {
   position: relative;
   z-index: 30;
-  background: #000;
 }
 .orb-gif {
   position: absolute;
@@ -1207,7 +1205,6 @@ body.menu-open {
   justify-content: center;
   overflow: hidden;
   perspective: 1200px;
-  background: #000;
 }
 .panel-text {
   position: relative;
@@ -2538,7 +2535,7 @@ body.menu-open {
     width: 100%;
   }
   .intro-new-image {
-    max-width: 230px;
+    max-width: 190px;
     flex-shrink: 0;
     margin: 0 auto;
   }
@@ -2548,7 +2545,7 @@ body.menu-open {
   .intro-alphabet img {
     width: 62px;
   }
-  /* ✅ user-info: min-width:0 추가 → 텍스트 잘림 방지 */
+
   .intro-new-user-info {
     align-items: flex-start;
     padding: 0;
@@ -2567,16 +2564,16 @@ body.menu-open {
     min-width: 0;
   }
   .intro-new-txt {
-    font-size: 13px;
+    font-size: 12px;
     white-space: nowrap;
   }
-  /* ✅ 값 셀은 줄바꿈 허용 */
+
   .intro-new-num,
   .intro-new-em,
   .intro-new-ad {
-    font-size: 13px;
-    white-space: normal;
-    word-break: break-all;
+    font-size: 12px;
+    white-space: nowrap;
+    word-break: normal;
   }
   .intro-nav {
     width: 52px;
@@ -3002,7 +2999,7 @@ body.menu-open {
     justify-content: center;
   }
   .intro-new-image {
-    max-width: 170px;
+    max-width: 140px;
     flex-shrink: 0;
   }
   .intro-new-user-info {
@@ -3013,30 +3010,30 @@ body.menu-open {
     top: -40px;
   }
   .intro-alphabet img {
-    width: 45px;
+    width: 40px;
   }
   .intro-new-name {
-    font-size: 17px;
+    font-size: 15px;
     text-align: left;
   }
   .intro-new-name span {
-    font-size: 14px;
+    font-size: 12px;
   }
-  /* ✅ 라벨만 nowrap, 값 셀은 줄바꿈 허용 */
+
   .intro-new-txt {
-    font-size: 11px;
+    font-size: 10px;
     white-space: nowrap;
   }
   .intro-new-num,
   .intro-new-em,
   .intro-new-ad {
-    font-size: 11px;
-    white-space: normal;
-    word-break: break-all;
+    font-size: 10px;
+    white-space: nowrap;
+    word-break: normal;
   }
   .info-grid {
-    column-gap: 8px;
-    row-gap: 5px;
+    column-gap: 6px;
+    row-gap: 4px;
     min-width: 0;
   }
   .orbit-svg {
@@ -3339,40 +3336,40 @@ body.menu-open {
     gap: 12px;
   }
   .intro-new-image {
-    max-width: 120px;
+    max-width: 105px;
     flex-shrink: 0;
   }
   .intro-about {
     top: -44px;
   }
   .intro-alphabet img {
-    width: 48px;
+    width: 45px;
   }
   .intro-new-user-info {
     min-width: 0;
     padding: 0;
   }
   .intro-new-name {
-    font-size: 16px;
+    font-size: 14px;
   }
   .intro-new-name span {
-    font-size: 13px;
-  }
-  /* ✅ 375px도 동일하게 라벨만 nowrap */
-  .intro-new-txt {
     font-size: 11px;
+  }
+
+  .intro-new-txt {
+    font-size: 9.5px;
     white-space: nowrap;
   }
   .intro-new-num,
   .intro-new-em,
   .intro-new-ad {
-    font-size: 10px;
-    white-space: normal;
-    word-break: break-all;
+    font-size: 9.5px;
+    white-space: nowrap;
+    word-break: normal;
   }
   .info-grid {
-    column-gap: 5px;
-    row-gap: 4px;
+    column-gap: 4px;
+    row-gap: 3px;
     min-width: 0;
   }
   .orbit-svg {
@@ -3385,7 +3382,7 @@ body.menu-open {
     margin: 0.8rem auto;
   }
   .intro-new-text {
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     line-height: 1.68;
   }
   .intro-nav {
