@@ -202,7 +202,6 @@ body.menu-open {
   z-index: 1;
 }
 
-/* ✅ expanding-circle: GPU 레이어 강제 - 버벅임 방지 */
 .expanding-circle {
   position: absolute;
   width: 150px;
@@ -215,6 +214,7 @@ body.menu-open {
   will-change: transform;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  -webkit-transform: scale(0) translateZ(0);
 }
 .expanding-circle.show {
   opacity: 1;
@@ -404,15 +404,14 @@ body.menu-open {
   border: none;
   cursor: pointer;
   z-index: 100;
-  transition: all 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
   padding: 0;
-  opacity: 0;
-  visibility: hidden;
-}
-.intro-new-section.active .intro-nav {
   opacity: 1;
   visibility: visible;
 }
+
 .intro-nav img {
   width: 100%;
   height: 100%;
