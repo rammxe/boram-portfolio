@@ -166,6 +166,7 @@ function initScrollAnimation() {
   const isMobile = window.innerWidth <= 768;
   const blurHideProgress = isMobile ? 0.18 : 0.3;
   let autoTriggered = false;
+  let heroTl = null; /* ✅ 데스크톱 tl kill용 */
 
   /* =====================================================
      공통: 60% 도달 시 자동 슈우웅
@@ -174,41 +175,55 @@ function initScrollAnimation() {
     if (autoTriggered) return;
     autoTriggered = true;
 
+    /* ✅ 데스크톱: scrub tl 즉시 kill → gsap.fromTo와 충돌 방지 */
+    if (heroTl) {
+      if (heroTl.scrollTrigger) heroTl.scrollTrigger.kill();
+      heroTl.kill();
+      heroTl = null;
+    }
+
     if (blurtext) {
       blurtext.style.opacity = '0';
       blurtext.style.visibility = 'hidden';
     }
 
-    gsap.to(expandingCircle, {
-      scale: isMobile ? 18 : 90,
-      duration: 1.0,
-      ease: 'power2.in',
-      force3D: true,
-      overwrite: true,
-      onComplete: () => {
-        var waveWrapEl = document.querySelector('.wave-wrap');
-        if (waveWrapEl) {
-          waveWrapEl.style.visibility = 'visible';
-          waveWrapEl.style.pointerEvents = '';
-        }
-        if (!waveStarted) startWaveAnimation();
-        if (waveSvg) {
-          waveSvg.style.opacity = '1';
-          waveSvg.style.visibility = 'visible';
-        }
-        if (waveLetters) {
-          setTimeout(() => {
-            waveLetters.style.opacity = '1';
-            waveLetters.style.visibility = 'visible';
-          }, 600);
-        }
-        gsap.to(window, {
-          scrollTo: window.scrollY + ch * 0.5,
-          duration: 1.4,
-          ease: 'power2.inOut',
-        });
+    /* ✅ 현재 scale에서 바로 이어서 시작 - 멈춤 없이 슈우웅 */
+    const currentScale = gsap.getProperty(expandingCircle, 'scale') || 0;
+
+    gsap.fromTo(
+      expandingCircle,
+      { scale: currentScale },
+      {
+        scale: isMobile ? 18 : 90,
+        duration: 1.0,
+        ease: 'power2.in',
+        force3D: true,
+        overwrite: true,
+        onComplete: () => {
+          var waveWrapEl = document.querySelector('.wave-wrap');
+          if (waveWrapEl) {
+            waveWrapEl.style.visibility = 'visible';
+            waveWrapEl.style.pointerEvents = '';
+          }
+          if (!waveStarted) startWaveAnimation();
+          if (waveSvg) {
+            waveSvg.style.opacity = '1';
+            waveSvg.style.visibility = 'visible';
+          }
+          if (waveLetters) {
+            setTimeout(() => {
+              waveLetters.style.opacity = '1';
+              waveLetters.style.visibility = 'visible';
+            }, 600);
+          }
+          gsap.to(window, {
+            scrollTo: window.scrollY + ch * 0.5,
+            duration: 1.4,
+            ease: 'power2.inOut',
+          });
+        },
       },
-    });
+    );
   }
 
   /* =====================================================
@@ -319,7 +334,8 @@ function initScrollAnimation() {
      ✅ 데스크톱: 기존 pin + scrub 유지
      ===================================================== */
   } else {
-    const tl = gsap.timeline({
+    /* ✅ heroTl 변수로 선언 - triggerAutoExpand에서 kill 가능 */
+    heroTl = gsap.timeline({
       scrollTrigger: {
         trigger: heroIntro,
         start: 'top top',
@@ -330,6 +346,7 @@ function initScrollAnimation() {
         onLeave: () => hideWave(),
         onEnterBack: () => {
           autoTriggered = false;
+          heroTl = null;
           gsap.set(expandingCircle, { scale: 0 });
           expandingCircle.classList.remove('show');
           if (blurtext) {
@@ -386,7 +403,7 @@ function initScrollAnimation() {
       },
     });
 
-    tl.to(
+    heroTl.to(
       expandingCircle,
       {
         scale: 50,
