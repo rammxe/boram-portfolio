@@ -209,12 +209,12 @@ body.menu-open {
   background: #fff;
   border-radius: 50%;
   z-index: 2;
+  -webkit-transform: scale(0) translateZ(0);
   transform: scale(0) translateZ(0);
-  opacity: 0;
-  will-change: transform;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  -webkit-transform: scale(0) translateZ(0);
+  will-change: transform;
+  opacity: 0;
 }
 .expanding-circle.show {
   opacity: 1;
@@ -370,7 +370,7 @@ body.menu-open {
   align-items: center;
   justify-content: center;
   background: #ececea;
-  overflow:hidden;
+  overflow: hidden;
 }
 .page-about-me {
   background: url(../img/about__bgr3.png) center/cover no-repeat;
@@ -394,7 +394,7 @@ body.menu-open {
 }
 
 .intro-nav {
- position: absolute;
+  position: absolute;
   top: 50%;
   transform: translateY(-50%) translateZ(0); /* ← translateZ(0) 추가 */
   will-change: transform, opacity;
@@ -404,7 +404,9 @@ body.menu-open {
   border: none;
   cursor: pointer;
   z-index: 100;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
   padding: 0;
   opacity: 1 !important;
   visibility: visible !important;

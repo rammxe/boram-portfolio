@@ -115,7 +115,7 @@ function startWaveAnimation() {
   waveY = 0;
   waveInitTarget = 0;
 
-  // ✅ 3번째 blur-item (PARK BO RAM 컨테이너) 표시
+  // ✅ 3번째 blur-item (PARK BO RAM) 활성화
   if (blurItems[1]) {
     blurItems[1].classList.remove('active');
     blurItems[1].classList.add('past');
@@ -124,10 +124,18 @@ function startWaveAnimation() {
     blurItems[2].classList.add('active');
   }
 
+  // ✅ 기존 polygon 제거 후 새로 생성 (중복 방지)
+  var mEl = document.getElementById('m');
+  if (mEl) {
+    mEl.querySelectorAll('polygon').forEach(function (p) {
+      p.remove();
+    });
+  }
+  waves = [];
+
   for (var w = 0; w < nWaves; w++) {
     var p = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
     waves.push(p);
-    var mEl = document.getElementById('m');
     if (mEl) mEl.appendChild(p);
     if (w === 0) {
       p.setAttribute('fill', '#fff');
@@ -177,13 +185,7 @@ function initScrollAnimation() {
   const blurHideProgress = isMobile ? 0.18 : 0.3;
   let autoTriggered = false;
   let heroTl = null;
-
-  // ✅ 모바일 스케일 추적 변수 (핸드오프 시 점프 방지)
   let mobileCircleScale = 0;
-  // ✅ quickSetter: scroll 이벤트마다 gsap.set 호출 대신 사용 (훨씬 빠름)
-  const quickSetScale = expandingCircle
-    ? gsap.quickSetter(expandingCircle, 'scale')
-    : () => {};
 
   function triggerAutoExpand() {
     if (autoTriggered) return;
@@ -200,16 +202,12 @@ function initScrollAnimation() {
       blurtext.style.visibility = 'hidden';
     }
 
-    const fromScale = isMobile
-      ? mobileCircleScale
-      : gsap.getProperty(expandingCircle, 'scale') || 0;
-
     gsap.fromTo(
       expandingCircle,
-      { scale: fromScale },
+      { scale: mobileCircleScale },
       {
         scale: isMobile ? 22 : 90,
-        duration: isMobile ? 0.7 : 1.0,
+        duration: isMobile ? 0.75 : 1.0,
         ease: 'power2.in',
         force3D: true,
         overwrite: true,
@@ -230,14 +228,6 @@ function initScrollAnimation() {
               waveLetters.style.visibility = 'visible';
             }, 600);
           }
-          // 데스크톱만 scrollTo
-          if (!isMobile) {
-            gsap.to(window, {
-              scrollTo: window.scrollY + ch * 0.5,
-              duration: 1.4,
-              ease: 'power2.inOut',
-            });
-          }
         },
       },
     );
@@ -245,28 +235,24 @@ function initScrollAnimation() {
 
   /* ===================== 모바일 ===================== */
   if (isMobile) {
-    // ✅ 매 렌더마다 정확한 값 사용 (offsetTop 캐싱 X)
-    function getHeroProgress() {
-      const rect = heroIntro.getBoundingClientRect();
-      const scrolled = -rect.top;
-      return Math.min(Math.max(scrolled / heroIntro.offsetHeight, 0), 1);
-    }
+    heroContent.style.opacity = '1';
+    heroContent.style.visibility = 'visible';
 
     function onMobileScroll() {
-      const progress = getHeroProgress();
+      // ✅ getBoundingClientRect: 매 스크롤마다 실시간 계산 (캐싱 X)
+      const rect = heroIntro.getBoundingClientRect();
+      const progress = Math.min(
+        Math.max(-rect.top / heroIntro.offsetHeight, 0),
+        1,
+      );
 
       if (progress >= 1) {
         hideWave();
         return;
       }
 
-      if (heroContent) {
-        heroContent.style.opacity = '1';
-        heroContent.style.visibility = 'visible';
-      }
-
-      if (progress > 0.01) {
-        if (expandingCircle) expandingCircle.classList.add('show');
+      if (progress > 0.01 && expandingCircle) {
+        expandingCircle.classList.add('show');
       }
       if (scrollHint) scrollHint.classList.toggle('hide', progress > 0.02);
 
@@ -276,10 +262,10 @@ function initScrollAnimation() {
           progress > blurHideProgress ? 'hidden' : 'visible';
       }
 
-      // ✅ quickSetter로 부드러운 스케일 적용
+      // ✅ force3D: true 반드시 포함 (iOS Safari 렌더링 필수)
       if (!autoTriggered && expandingCircle) {
         mobileCircleScale = Math.min((progress / 0.6) * 12, 12);
-        quickSetScale(mobileCircleScale);
+        gsap.set(expandingCircle, { scale: mobileCircleScale, force3D: true });
       }
 
       if (progress >= 0.6 && !autoTriggered) {
@@ -304,8 +290,8 @@ function initScrollAnimation() {
       }
     }
 
+    // ✅ scroll + touchmove 둘 다 등록 (iOS 모멘텀 스크롤 대응)
     window.addEventListener('scroll', onMobileScroll, { passive: true });
-    // ✅ 터치 이벤트도 감지 (일부 iOS 환경)
     window.addEventListener('touchmove', onMobileScroll, { passive: true });
 
     ScrollTrigger.create({
@@ -314,23 +300,46 @@ function initScrollAnimation() {
       onEnterBack: () => {
         autoTriggered = false;
         mobileCircleScale = 0;
+
+        // ✅ wave polygon DOM 완전히 제거 (중복 생성 방지)
+        var mEl = document.getElementById('m');
+        if (mEl) {
+          mEl.querySelectorAll('polygon').forEach(function (p) {
+            p.remove();
+          });
+        }
+        waveStarted = false;
+        waves = [];
+        gsap.ticker.remove(drawWave);
+
         if (expandingCircle) {
-          quickSetScale(0);
+          gsap.set(expandingCircle, { scale: 0, force3D: true });
           expandingCircle.classList.remove('show');
         }
         if (blurtext) {
           blurtext.style.opacity = '1';
           blurtext.style.visibility = 'visible';
         }
+        // blur-item 초기화
+        blurItems.forEach((item) => item.classList.remove('active', 'past'));
+        setTimeout(() => {
+          if (blurItems[0]) blurItems[0].classList.add('active');
+        }, 300);
+        setTimeout(() => {
+          if (blurItems[0]) {
+            blurItems[0].classList.remove('active');
+            blurItems[0].classList.add('past');
+          }
+          if (blurItems[1]) blurItems[1].classList.add('active');
+        }, 2000);
+
         var waveWrapEl = document.querySelector('.wave-wrap');
         if (waveWrapEl) {
-          waveWrapEl.style.visibility = 'visible';
-          waveWrapEl.style.pointerEvents = '';
+          waveWrapEl.style.visibility = 'hidden';
+          waveWrapEl.style.pointerEvents = 'none';
         }
-        if (heroContent) {
-          heroContent.style.opacity = '1';
-          heroContent.style.visibility = 'visible';
-        }
+        heroContent.style.opacity = '1';
+        heroContent.style.visibility = 'visible';
       },
     });
 
@@ -338,7 +347,7 @@ function initScrollAnimation() {
     if (introNewSec) {
       ScrollTrigger.create({
         trigger: introNewSec,
-        start: 'top 98%',
+        start: 'top 95%',
         onEnter: () => hideWave(),
       });
     }
@@ -358,12 +367,26 @@ function initScrollAnimation() {
           autoTriggered = false;
           heroTl = null;
           mobileCircleScale = 0;
-          if (expandingCircle) gsap.set(expandingCircle, { scale: 0 });
+
+          // ✅ wave polygon DOM 완전히 제거
+          var mEl = document.getElementById('m');
+          if (mEl) {
+            mEl.querySelectorAll('polygon').forEach(function (p) {
+              p.remove();
+            });
+          }
+          waveStarted = false;
+          waves = [];
+          gsap.ticker.remove(drawWave);
+
+          if (expandingCircle)
+            gsap.set(expandingCircle, { scale: 0, force3D: true });
           if (expandingCircle) expandingCircle.classList.remove('show');
           if (blurtext) {
             blurtext.style.opacity = '1';
             blurtext.style.visibility = 'visible';
           }
+          blurItems.forEach((item) => item.classList.remove('active', 'past'));
           var waveWrapEl = document.querySelector('.wave-wrap');
           if (waveWrapEl) {
             waveWrapEl.style.visibility = 'visible';
@@ -372,12 +395,6 @@ function initScrollAnimation() {
           if (heroContent) {
             heroContent.style.opacity = '1';
             heroContent.style.visibility = 'visible';
-          }
-          if (waveStarted && waveSvg) {
-            waveSvg.style.visibility = 'visible';
-            waveSvg.style.opacity = '1';
-            gsap.ticker.remove(drawWave);
-            gsap.ticker.add(drawWave);
           }
         },
         onUpdate: (self) => {
@@ -1392,7 +1409,6 @@ function initNewIntroAnimation() {
   var introNewText = document.querySelector('.intro-new-text');
   var verticalLine = document.querySelector('.intro-new-vertical-line');
   var orbitRight = document.querySelector('.about-right');
-
   ScrollTrigger.create({
     trigger: introNewSection,
     start: 'top 75%',
@@ -1675,7 +1691,6 @@ function triggerSkillAnimation() {
 function updateNavigation() {
   var isFirst = currentPage === 0;
   var isLast = currentPage === totalPages - 1;
-
   prevBtn.style.setProperty('opacity', isFirst ? '0' : '1', 'important');
   prevBtn.style.setProperty(
     'visibility',
@@ -1683,7 +1698,6 @@ function updateNavigation() {
     'important',
   );
   prevBtn.style.pointerEvents = isFirst ? 'none' : 'auto';
-
   nextBtn.classList.toggle('hint-float', isFirst);
   nextBtn.style.setProperty('opacity', isLast ? '0' : '1', 'important');
   nextBtn.style.setProperty(
@@ -1692,7 +1706,6 @@ function updateNavigation() {
     'important',
   );
   nextBtn.style.pointerEvents = isLast ? 'none' : 'auto';
-
   wrapper.style.transform = 'translateX(' + -currentPage * 100 + 'vw)';
   setTimeout(function () {
     if (currentPage === 1) triggerOutAnimation();
