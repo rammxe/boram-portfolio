@@ -201,6 +201,8 @@ body.menu-open {
   background: #000;
   z-index: 1;
 }
+
+/* ✅ expanding-circle: GPU 레이어 강제 - 버벅임 방지 */
 .expanding-circle {
   position: absolute;
   width: 150px;
@@ -208,12 +210,16 @@ body.menu-open {
   background: #fff;
   border-radius: 50%;
   z-index: 2;
-  transform: scale(0);
+  transform: scale(0) translateZ(0);
   opacity: 0;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 .expanding-circle.show {
   opacity: 1;
 }
+
 .blurtext {
   position: absolute;
   width: 100%;
@@ -254,6 +260,7 @@ body.menu-open {
   filter: blur(10px);
   letter-spacing: 0.2em;
 }
+
 .scroll-hint {
   position: absolute;
   bottom: 40px;
@@ -277,6 +284,7 @@ body.menu-open {
     transform: translateX(-50%) translateY(10px);
   }
 }
+
 .wave-wrap {
   position: fixed;
   top: 0;
@@ -355,7 +363,7 @@ body.menu-open {
 }
 
 /* ========== INTRO SECTION ========== */
-/* ✅ 수정 3: background 추가 - wave/FRONT-END 비침 방지 */
+/* ✅ background 추가 - wave/hero-content 비침 차단 */
 .intro-new-section {
   position: relative;
   z-index: 20;
@@ -368,7 +376,8 @@ body.menu-open {
 .page-about-me {
   background: url(../img/about__bgr3.png) center/cover no-repeat;
 }
-/* ✅ 수정 4: width 고정 + overflow:hidden - 페이지 비침 방지 */
+
+/* ✅ scroll-page: overflow hidden으로 페이지 간 비침 방지 */
 .horizontal-wrapper {
   width: 100%;
   display: flex;
@@ -384,6 +393,7 @@ body.menu-open {
   padding: 70px 0 40px;
   overflow: hidden;
 }
+
 .intro-nav {
   position: absolute;
   top: 50%;
@@ -438,6 +448,7 @@ body.menu-open {
 .intro-nav-next.hint-float {
   animation: floatArrow 1.2s ease-in-out infinite;
 }
+
 .intro-new-container {
   max-width: 1400px;
   width: 100%;
@@ -605,6 +616,7 @@ body.menu-open {
   letter-spacing: -0.3px;
   text-align: left;
 }
+
 .intro-new-vertical-line {
   position: absolute;
   left: 50%;
@@ -1169,9 +1181,11 @@ body.menu-open {
 }
 
 /* ========== ABOUT SECTION ========== */
+/* ✅ background: #000 추가 - hero-content/wave 비침 완전 차단 */
 .about-scroll-wrap {
   position: relative;
   z-index: 30;
+  background: #000;
 }
 .orb-gif {
   position: absolute;
@@ -1193,6 +1207,7 @@ body.menu-open {
   justify-content: center;
   overflow: hidden;
   perspective: 1200px;
+  background: #000;
 }
 .panel-text {
   position: relative;
@@ -1248,7 +1263,6 @@ body.menu-open {
   object-fit: cover;
   display: block;
 }
-
 .panel-1 .float-img-a {
   width: 190px;
   height: auto;
@@ -1317,13 +1331,16 @@ body.menu-open {
 }
 
 /* ========== PROJECTS SECTION ========== */
+/* ✅ background-color 폴백 추가 */
 .projects-section {
   position: relative;
   z-index: 40;
   min-height: 100vh;
   overflow: hidden;
   padding-top: 5vh;
-  background: url(../img/project__bg.png) center/cover no-repeat;
+  background:
+    url(../img/project__bg.png) center/cover no-repeat,
+    #0a0a0a;
 }
 .projects-frame {
   position: relative;
@@ -2039,9 +2056,7 @@ body.menu-open {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-/* ================================================================
-   1200px
-================================================================ */
+/* ================================================================ 1200px ================================================================ */
 @media screen and (max-width: 1200px) {
   .wave-svg {
     font-size: 72px;
@@ -2125,9 +2140,7 @@ body.menu-open {
   }
 }
 
-/* ================================================================
-   1024px
-================================================================ */
+/* ================================================================ 1024px ================================================================ */
 @media screen and (max-width: 1024px) {
   .cursor {
     display: none;
@@ -2153,7 +2166,6 @@ body.menu-open {
   .wave-letters {
     gap: 4px;
   }
-
   .scroll-page {
     padding: 70px 20px;
   }
@@ -2235,7 +2247,6 @@ body.menu-open {
   .intro-nav-next {
     right: 15px;
   }
-
   .page-out .out-bg-text {
     font-size: 120px;
   }
@@ -2270,7 +2281,6 @@ body.menu-open {
   .badge span {
     font-size: 16px;
   }
-
   .skill-bg-text {
     font-size: 100px;
   }
@@ -2296,7 +2306,6 @@ body.menu-open {
   .skill-desc {
     font-size: 10.5px;
   }
-
   .panel-headline {
     font-size: clamp(3rem, 7vw, 6rem);
   }
@@ -2347,12 +2356,10 @@ body.menu-open {
     width: 145px;
     left: 1%;
   }
-
   .orb-gif {
     width: 680px;
     height: 680px;
   }
-
   .projects-header__title {
     font-size: clamp(2.5rem, 6vw, 5rem);
   }
@@ -2458,7 +2465,6 @@ body.menu-open {
     width: 70px;
     height: 70px;
   }
-
   .gallery-header__title {
     font-size: clamp(2.5rem, 6vw, 5rem);
   }
@@ -2474,9 +2480,7 @@ body.menu-open {
   }
 }
 
-/* ================================================================
-   768px
-================================================================ */
+/* ================================================================ 768px ================================================================ */
 @media screen and (max-width: 768px) {
   .menu-wrapper .menu-btn {
     right: -80px;
@@ -2516,7 +2520,6 @@ body.menu-open {
     gap: 3px;
     flex-wrap: nowrap;
   }
-
   .scroll-page {
     padding: 68px 18px 48px;
   }
@@ -2545,10 +2548,12 @@ body.menu-open {
   .intro-alphabet img {
     width: 62px;
   }
+  /* ✅ user-info: min-width:0 추가 → 텍스트 잘림 방지 */
   .intro-new-user-info {
     align-items: flex-start;
     padding: 0;
     width: auto;
+    min-width: 0;
   }
   .intro-new-name {
     font-size: 20px;
@@ -2559,12 +2564,19 @@ body.menu-open {
     transform: translateX(0);
     column-gap: 7px;
     row-gap: 5px;
+    min-width: 0;
   }
-  .intro-new-txt,
+  .intro-new-txt {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  /* ✅ 값 셀은 줄바꿈 허용 */
   .intro-new-num,
   .intro-new-em,
   .intro-new-ad {
     font-size: 13px;
+    white-space: normal;
+    word-break: break-all;
   }
   .intro-nav {
     width: 52px;
@@ -2588,7 +2600,6 @@ body.menu-open {
     line-height: 1.78;
     text-align: center;
   }
-
   .out-bg-text {
     font-size: 62px;
     opacity: 0.52;
@@ -2632,7 +2643,6 @@ body.menu-open {
     font-size: 14px;
     letter-spacing: -0.02em;
   }
-
   .skill-bg-text {
     font-size: 62px;
     opacity: 0.52;
@@ -2671,12 +2681,10 @@ body.menu-open {
   .skill-bar-bg {
     height: 4px;
   }
-
   .orb-gif {
     width: 720px;
     height: 720px;
   }
-
   .panel-headline {
     font-size: clamp(2.5rem, 10vw, 5rem);
     gap: 0 12px;
@@ -2743,7 +2751,6 @@ body.menu-open {
     top: 55%;
     left: 0;
   }
-
   .projects-section {
     padding-top: 2vh;
   }
@@ -2816,7 +2823,6 @@ body.menu-open {
     bottom: 2vh;
     right: 2vw;
   }
-
   .content__item {
     flex-direction: column;
     align-items: center;
@@ -2893,7 +2899,6 @@ body.menu-open {
     gap: 1.5rem;
     padding: 0.5rem 0;
   }
-
   .gallery-section {
     padding-top: 2vh;
   }
@@ -2926,7 +2931,6 @@ body.menu-open {
   .gallery-item::after {
     opacity: 0;
   }
-
   .gradient-img {
     width: 265px;
     height: 265px;
@@ -2952,9 +2956,7 @@ body.menu-open {
   }
 }
 
-/* ================================================================
-   480px
-================================================================ */
+/* ================================================================ 480px ================================================================ */
 @media screen and (max-width: 480px) {
   .menu-wrapper .menu-btn {
     right: -70px;
@@ -2979,7 +2981,6 @@ body.menu-open {
   .blurtext {
     font-size: clamp(1.95rem, 14vw, 3.8rem);
   }
-  /* ✅ 수정 5: wave 글씨 크기 줄임 (iPhone 390px 기준) */
   .wave-svg {
     font-size: clamp(18px, 7.5vw, 36px);
   }
@@ -2989,7 +2990,6 @@ body.menu-open {
   .wave-letters {
     gap: 1px;
   }
-
   .scroll-page {
     padding: 60px 20px 40px;
   }
@@ -3017,22 +3017,27 @@ body.menu-open {
   }
   .intro-new-name {
     font-size: 17px;
-    white-space: nowrap;
     text-align: left;
   }
   .intro-new-name span {
     font-size: 14px;
   }
-  .intro-new-txt,
+  /* ✅ 라벨만 nowrap, 값 셀은 줄바꿈 허용 */
+  .intro-new-txt {
+    font-size: 11px;
+    white-space: nowrap;
+  }
   .intro-new-num,
   .intro-new-em,
   .intro-new-ad {
     font-size: 11px;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-all;
   }
   .info-grid {
     column-gap: 8px;
     row-gap: 5px;
+    min-width: 0;
   }
   .orbit-svg {
     max-width: 210px;
@@ -3057,7 +3062,6 @@ body.menu-open {
   .intro-nav-next {
     right: 15px;
   }
-
   .page-out .out-bg-text {
     font-size: 46px;
   }
@@ -3088,7 +3092,6 @@ body.menu-open {
   .badge span {
     font-size: 11px;
   }
-
   .page-skill .skill-bg-text {
     font-size: 46px;
   }
@@ -3130,12 +3133,10 @@ body.menu-open {
   .skill-bar-bg {
     height: 3px;
   }
-
   .orb-gif {
     width: 700px;
     height: 700px;
   }
-
   .panel-headline {
     font-size: clamp(1.95rem, 12vw, 3.8rem);
   }
@@ -3177,7 +3178,6 @@ body.menu-open {
   .panel-3 .float-img-d {
     width: 74px;
   }
-
   .projects-header__title {
     font-size: clamp(1.78rem, 11vw, 2.9rem);
   }
@@ -3274,7 +3274,6 @@ body.menu-open {
     font-size: 0.6rem;
     gap: 1.2rem;
   }
-
   .gallery-header__title {
     font-size: clamp(1.78rem, 11vw, 2.9rem);
   }
@@ -3298,9 +3297,7 @@ body.menu-open {
   }
 }
 
-/* ================================================================
-   375px
-================================================================ */
+/* ================================================================ 375px ================================================================ */
 @media screen and (max-width: 375px) {
   .menu-wrapper .menu-btn {
     right: -65px;
@@ -3325,14 +3322,12 @@ body.menu-open {
   .blurtext {
     font-size: clamp(1.8rem, 14vw, 3.5rem);
   }
-  /* ✅ 수정 6: 375px wave 글씨 크기 줄임 */
   .wave-svg {
     font-size: 7.5vw;
   }
   .wave-letter {
     height: 24px;
   }
-
   .scroll-page {
     padding: 55px 16px 36px;
   }
@@ -3359,21 +3354,26 @@ body.menu-open {
   }
   .intro-new-name {
     font-size: 16px;
-    white-space: nowrap;
   }
   .intro-new-name span {
     font-size: 13px;
   }
-  .intro-new-txt,
+  /* ✅ 375px도 동일하게 라벨만 nowrap */
+  .intro-new-txt {
+    font-size: 11px;
+    white-space: nowrap;
+  }
   .intro-new-num,
   .intro-new-em,
   .intro-new-ad {
-    font-size: 11px;
-    white-space: nowrap;
+    font-size: 10px;
+    white-space: normal;
+    word-break: break-all;
   }
   .info-grid {
     column-gap: 5px;
     row-gap: 4px;
+    min-width: 0;
   }
   .orbit-svg {
     max-width: 175px;
@@ -3398,7 +3398,6 @@ body.menu-open {
   .intro-nav-next {
     right: 2px;
   }
-
   .out-bg-text {
     font-size: 40px;
   }
@@ -3429,7 +3428,6 @@ body.menu-open {
   .badge span {
     font-size: 9px;
   }
-
   .skill-bg-text {
     font-size: 40px;
   }
@@ -3461,12 +3459,10 @@ body.menu-open {
   .skill-level-label {
     font-size: 6.5px;
   }
-
   .orb-gif {
     width: 560px;
     height: 560px;
   }
-
   .panel-headline {
     font-size: clamp(1.7rem, 12vw, 2.8rem);
     gap: 0 8px;
@@ -3475,7 +3471,6 @@ body.menu-open {
     font-size: 0.78rem;
     padding: 0 12px;
   }
-
   .projects-header__title {
     font-size: clamp(1.5rem, 12vw, 2.3rem);
   }
@@ -3555,7 +3550,6 @@ body.menu-open {
     font-size: 0.52rem;
     gap: 0.9rem;
   }
-
   .gallery-header__title {
     font-size: clamp(1.5rem, 12vw, 2.3rem);
   }
@@ -3577,9 +3571,7 @@ body.menu-open {
   }
 }
 
-/* ================================================================
-   터치 기기
-================================================================ */
+/* ================================================================ 터치 기기 ================================================================ */
 @media (hover: none) and (pointer: coarse) {
   .cursor {
     display: none !important;
