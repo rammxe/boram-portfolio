@@ -370,6 +370,7 @@ body.menu-open {
   align-items: center;
   justify-content: center;
   background: #ececea;
+  overflow:hidden;
 }
 .page-about-me {
   background: url(../img/about__bgr3.png) center/cover no-repeat;
@@ -377,7 +378,7 @@ body.menu-open {
 
 .horizontal-wrapper {
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   transition: transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
@@ -393,23 +394,20 @@ body.menu-open {
 }
 
 .intro-nav {
-  position: absolute;
+ position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) translateZ(0); /* ← translateZ(0) 추가 */
+  will-change: transform, opacity;
   width: 120px;
   height: 120px;
   background: none;
   border: none;
   cursor: pointer;
   z-index: 100;
-  transition:
-    opacity 0.3s ease,
-    visibility 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
   padding: 0;
   opacity: 1 !important;
   visibility: visible !important;
-  will-change: transform;
-  transform: translateY(-50%) translateZ(0);
 }
 
 .intro-nav img {
