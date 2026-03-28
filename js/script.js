@@ -65,7 +65,7 @@ function startTyping() {
   if (!typingEl) return;
   const typingText = 'PARK BO RAM';
   let index = 0;
-  let blinkInterval = null; // ── 클린업용
+  let blinkInterval = null;
   typingEl.textContent = '';
 
   function typeLetter() {
@@ -76,7 +76,6 @@ function startTyping() {
     } else {
       typingEl.textContent = typingText + '|';
       let visible = true;
-      // 기존 interval 제거 후 새로 시작
       if (blinkInterval) clearInterval(blinkInterval);
       blinkInterval = setInterval(() => {
         typingEl.textContent = typingText + (visible ? '|' : ' ');
@@ -137,12 +136,15 @@ function startWaveAnimation() {
     },
   );
 
-  gsap.to(window, {
-    scrollTo: window.scrollY + ch / 2,
-    duration: 1.5,
-    ease: 'power2.inOut',
-    delay: 0.5,
-  });
+  /* ✅ 수정 1: 모바일에서는 자동 스크롤 비활성화 */
+  if (window.innerWidth > 768) {
+    gsap.to(window, {
+      scrollTo: window.scrollY + ch / 2,
+      duration: 1.5,
+      ease: 'power2.inOut',
+      delay: 0.5,
+    });
+  }
 }
 
 function initHeroIntro() {
@@ -173,7 +175,8 @@ function initScrollAnimation() {
       end: 'bottom bottom',
       pin: heroContent,
       pinSpacing: false,
-      scrub: 0.5,
+      /* ✅ 수정 2: 모바일에서 scrub true로 (snap 느낌 제거) */
+      scrub: window.innerWidth <= 768 ? true : 0.5,
       onLeave: () => hideWave(),
       onEnterBack: () => {
         if (waveStarted && waveSvg) {
@@ -1161,7 +1164,6 @@ function initContactAnimation() {
   });
 }
 
-// ── IntersectionObserver → ScrollTrigger 교체, once:true ──
 function initNewIntroAnimation() {
   var introNewSection = document.getElementById('intro-new');
   if (!introNewSection) return;
@@ -1244,9 +1246,8 @@ function init() {
   setTimeout(initHeroIntro, 500);
   initScrollAnimation();
   initAboutAnimation();
-  // ── initAboutOrbCanvas() 제거 (GIF로 대체) ──
   initProjectsTitleAnimation();
-  initNewIntroAnimation(); // ── init() 안으로 이동 (load 후 ScrollTrigger 준비된 상태에서 실행)
+  initNewIntroAnimation();
 
   if (projectsSection) {
     ScrollTrigger.create({
@@ -1307,7 +1308,7 @@ window.addEventListener(
     cursorX = 0,
     cursorY = 0;
   var cursorSpeed = 0.15;
-  var cursorRafId = null; // ── 중복 방지
+  var cursorRafId = null;
 
   window.addEventListener(
     'mousemove',
@@ -1325,7 +1326,7 @@ window.addEventListener(
     cursor.style.top = cursorY + 'px';
     cursorRafId = requestAnimationFrame(animateCursor);
   }
-  if (!cursorRafId) animateCursor(); // ── 한 번만 시작
+  if (!cursorRafId) animateCursor();
 
   var animateit = function (e) {
     var span = this.querySelector(':scope > span');
@@ -1515,8 +1516,8 @@ nextBtn.addEventListener('click', function () {
       isDragging = false;
       var dx = e.changedTouches[0].clientX - startX;
       var dy = e.changedTouches[0].clientY - startY;
-      if (Math.abs(dx) < Math.abs(dy) * 1.5) return; // 수직 스크롤이면 무시
-      if (Math.abs(dx) < 40) return; // 너무 짧으면 무시
+      if (Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      if (Math.abs(dx) < 40) return;
       if (dx < 0 && currentPage < totalPages - 1) {
         currentPage++;
         updateNavigation();
