@@ -395,7 +395,7 @@ body.menu-open {
 }
 
 .intro-nav {
-position: absolute;
+  position: absolute;
   top: 50%;
   transform: translateY(-50%);
   width: 120px;
@@ -404,7 +404,9 @@ position: absolute;
   border: none;
   cursor: pointer;
   z-index: 100;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
   padding: 0;
   opacity: 1 !important;
   visibility: visible !important;
@@ -1191,8 +1193,8 @@ position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) translateZ(0);
-  width: 720px;
-  height: 720px;
+  width: 1200px;
+  height: 1200px;
   object-fit: contain;
   pointer-events: none;
   will-change: transform;
@@ -3064,7 +3066,7 @@ position: absolute;
     right: 15px;
   }
   .page-out .out-bg-text {
-    font-size: 46px;
+    font-size: 70px;
   }
   .out-container {
     grid-template-columns: 1fr;
@@ -3094,7 +3096,7 @@ position: absolute;
     font-size: 11px;
   }
   .page-skill .skill-bg-text {
-    font-size: 46px;
+    font-size: 70px;
   }
   .skill-title {
     font-size: 20px;
