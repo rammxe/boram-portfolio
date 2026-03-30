@@ -115,7 +115,6 @@ function startWaveAnimation() {
   waveY = 0;
   waveInitTarget = 0;
 
-  // ✅ 3번째 blur-item (PARK BO RAM) 활성화
   if (blurItems[1]) {
     blurItems[1].classList.remove('active');
     blurItems[1].classList.add('past');
@@ -124,7 +123,6 @@ function startWaveAnimation() {
     blurItems[2].classList.add('active');
   }
 
-  // ✅ 기존 polygon 제거 후 새로 생성 (중복 방지)
   var mEl = document.getElementById('m');
   if (mEl) {
     mEl.querySelectorAll('polygon').forEach(function (p) {
@@ -187,10 +185,12 @@ function initScrollAnimation() {
   let heroTl = null;
   let mobileCircleScale = 0;
 
+  // ✅ triggerAutoExpand: scrub 완전히 끊고 혼자 자동 확장
   function triggerAutoExpand() {
     if (autoTriggered) return;
     autoTriggered = true;
 
+    // scrub 연결 완전히 끊기
     if (heroTl) {
       if (heroTl.scrollTrigger) heroTl.scrollTrigger.kill();
       heroTl.kill();
@@ -202,9 +202,12 @@ function initScrollAnimation() {
       blurtext.style.visibility = 'hidden';
     }
 
+    // 현재 scale 값 이어받기
+    const currentScale = parseFloat(gsap.getProperty(expandingCircle, 'scale')) || 0;
+
     gsap.fromTo(
       expandingCircle,
-      { scale: mobileCircleScale },
+      { scale: isMobile ? mobileCircleScale : currentScale },
       {
         scale: isMobile ? 22 : 90,
         duration: isMobile ? 0.75 : 1.0,
@@ -239,7 +242,6 @@ function initScrollAnimation() {
     heroContent.style.visibility = 'visible';
 
     function onMobileScroll() {
-      // ✅ getBoundingClientRect: 매 스크롤마다 실시간 계산 (캐싱 X)
       const rect = heroIntro.getBoundingClientRect();
       const progress = Math.min(
         Math.max(-rect.top / heroIntro.offsetHeight, 0),
@@ -262,13 +264,13 @@ function initScrollAnimation() {
           progress > blurHideProgress ? 'hidden' : 'visible';
       }
 
-      // ✅ force3D: true 반드시 포함 (iOS Safari 렌더링 필수)
       if (!autoTriggered && expandingCircle) {
         mobileCircleScale = Math.min((progress / 0.6) * 12, 12);
         gsap.set(expandingCircle, { scale: mobileCircleScale, force3D: true });
       }
 
-      if (progress >= 0.6 && !autoTriggered) {
+      // ✅ 0.45에서 자동 확장 트리거 (기존 0.6 → 0.45)
+      if (progress >= 0.45 && !autoTriggered) {
         triggerAutoExpand();
       }
 
@@ -290,7 +292,6 @@ function initScrollAnimation() {
       }
     }
 
-    // ✅ scroll + touchmove 둘 다 등록 (iOS 모멘텀 스크롤 대응)
     window.addEventListener('scroll', onMobileScroll, { passive: true });
     window.addEventListener('touchmove', onMobileScroll, { passive: true });
 
@@ -301,7 +302,6 @@ function initScrollAnimation() {
         autoTriggered = false;
         mobileCircleScale = 0;
 
-        // ✅ wave polygon DOM 완전히 제거 (중복 생성 방지)
         var mEl = document.getElementById('m');
         if (mEl) {
           mEl.querySelectorAll('polygon').forEach(function (p) {
@@ -320,7 +320,6 @@ function initScrollAnimation() {
           blurtext.style.opacity = '1';
           blurtext.style.visibility = 'visible';
         }
-        // blur-item 초기화
         blurItems.forEach((item) => item.classList.remove('active', 'past'));
         setTimeout(() => {
           if (blurItems[0]) blurItems[0].classList.add('active');
@@ -352,7 +351,7 @@ function initScrollAnimation() {
       });
     }
 
-    /* ===================== 데스크톱 ===================== */
+  /* ===================== 데스크톱 ===================== */
   } else {
     heroTl = gsap.timeline({
       scrollTrigger: {
@@ -368,7 +367,6 @@ function initScrollAnimation() {
           heroTl = null;
           mobileCircleScale = 0;
 
-          // ✅ wave polygon DOM 완전히 제거
           var mEl = document.getElementById('m');
           if (mEl) {
             mEl.querySelectorAll('polygon').forEach(function (p) {
@@ -407,7 +405,8 @@ function initScrollAnimation() {
             blurtext.style.visibility =
               progress > blurHideProgress ? 'hidden' : 'visible';
           }
-          if (progress >= 0.6 && !autoTriggered) triggerAutoExpand();
+          // ✅ 0.45에서 자동 트리거 (기존 0.6, circle visibility:hidden 줄 완전 제거)
+          if (progress >= 0.45 && !autoTriggered) triggerAutoExpand();
           if (!autoTriggered) {
             const waveShowProgress = 0.4;
             const lettersShowProgress = 0.65;
@@ -424,10 +423,7 @@ function initScrollAnimation() {
               waveLetters.style.visibility =
                 progress > lettersShowProgress ? 'visible' : 'hidden';
             }
-            if (expandingCircle) {
-              expandingCircle.style.visibility =
-                progress > 0.55 ? 'hidden' : 'visible';
-            }
+            // ← expandingCircle visibility hidden 줄 완전 삭제
           }
         },
       },
@@ -657,36 +653,9 @@ var lineEq = function (y2, y1, x2, x1, currentVal) {
   return m * currentVal + (y1 - m * x1);
 };
 var chars = [
-  'a',
-  'b',
-  'c',
-  'd',
-  'e',
-  'f',
-  'g',
-  'h',
-  'i',
-  'j',
-  'k',
-  'l',
-  'm',
-  'n',
-  'o',
-  'p',
-  'q',
-  'r',
-  's',
-  't',
-  'u',
-  'v',
-  'w',
-  'x',
-  'y',
-  'z',
-  '.',
-  ':',
-  '',
-  '^',
+  'a','b','c','d','e','f','g','h','i','j','k','l','m',
+  'n','o','p','q','r','s','t','u','v','w','x','y','z',
+  '.', ':', '', '^',
 ];
 var charsTotal = chars.length;
 
@@ -701,6 +670,7 @@ var charming = function (el) {
   });
 };
 
+// ✅ 렉 핵심 수정: setTimeout 간격 20~80ms로 줄여서 타이머 빨리 정리
 var randomizeLetters = function (letters) {
   return new Promise(function (resolve) {
     var lettersTotal = letters.length,
@@ -709,7 +679,7 @@ var randomizeLetters = function (letters) {
       var loopTimeout;
       var loop = function () {
         letter.innerHTML = chars[getRandomInt(0, charsTotal - 1)];
-        loopTimeout = setTimeout(loop, getRandomInt(50, 500));
+        loopTimeout = setTimeout(loop, getRandomInt(20, 80)); // 기존 50~500 → 20~80
       };
       loop();
       setTimeout(
@@ -881,11 +851,11 @@ class Slide {
   }
   moveToPosition(settings) {
     const isMobile = winsize.width <= 768;
-    const dur = isMobile ? 0.45 : 0.8;
+    const dur = isMobile ? 0.35 : 0.8; // ✅ 모바일 duration 단축 (0.45 → 0.35)
     return new Promise((resolve) => {
       gsap.to(this.DOM.imgWrap, {
         duration: dur,
-        ease: isMobile ? 'power2.inOut' : 'power4.inOut',
+        ease: isMobile ? 'power2.out' : 'power4.inOut', // ✅ 모바일 ease 변경
         delay: settings.delay || 0,
         startAt:
           settings.from !== undefined
@@ -902,6 +872,7 @@ class Slide {
         rotationX: 0,
         rotationY: 0,
         rotationZ: this.transforms[settings.position + 2].rotation,
+        force3D: true, // ✅ GPU 가속 강제
         onStart:
           settings.from !== undefined
             ? () => gsap.set(this.DOM.imgWrap, { opacity: 1 })
@@ -936,8 +907,20 @@ class Slide {
     gsap.set(this.DOM.texts.wrap, { opacity: 1 });
     gsap.set(this.DOM.texts.side, { opacity: 1 });
     if (animation) {
-      randomizeLetters(this.DOM.titleLetters);
-      randomizeLetters(this.DOM.sideLetters);
+      // ✅ 모바일에서는 randomizeLetters 생략 (렉 핵심 원인)
+      if (winsize.width <= 768) {
+        this.DOM.titleLetters.forEach((l) => {
+          l.style.opacity = 1;
+          l.innerHTML = l.dataset.initial;
+        });
+        this.DOM.sideLetters.forEach((l) => {
+          l.style.opacity = 1;
+          l.innerHTML = l.dataset.initial;
+        });
+      } else {
+        randomizeLetters(this.DOM.titleLetters);
+        randomizeLetters(this.DOM.sideLetters);
+      }
       gsap.to(this.DOM.texts.number, {
         duration: 0.6,
         ease: 'elastic.out(1, 0.5)',
@@ -1185,10 +1168,11 @@ class Slideshow {
     this.isAnimating = true;
     allowTilt = false;
     const isMobile = winsize.width <= 768;
+    // ✅ 모바일 딜레이 대폭 단축
     const d1 = 0,
-      d2 = isMobile ? 0.05 : 0.07,
-      d3 = isMobile ? 0.1 : 0.14,
-      d4 = isMobile ? 0.14 : 0.21;
+      d2 = isMobile ? 0.02 : 0.07,
+      d3 = isMobile ? 0.04 : 0.14,
+      d4 = isMobile ? 0.06 : 0.21;
     const upcomingPos =
       direction === 'next'
         ? this.current < this.slidesTotal - 2
