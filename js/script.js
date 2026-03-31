@@ -115,7 +115,6 @@ function startWaveAnimation() {
   waveY = 0;
   waveInitTarget = 0;
 
-  // ✅ 3번째 blur-item (PARK BO RAM) 활성화
   if (blurItems[1]) {
     blurItems[1].classList.remove('active');
     blurItems[1].classList.add('past');
@@ -124,7 +123,6 @@ function startWaveAnimation() {
     blurItems[2].classList.add('active');
   }
 
-  // ✅ 기존 polygon 제거 후 새로 생성 (중복 방지)
   var mEl = document.getElementById('m');
   if (mEl) {
     mEl.querySelectorAll('polygon').forEach(function (p) {
@@ -239,7 +237,6 @@ function initScrollAnimation() {
     heroContent.style.visibility = 'visible';
 
     function onMobileScroll() {
-      // ✅ getBoundingClientRect: 매 스크롤마다 실시간 계산 (캐싱 X)
       const rect = heroIntro.getBoundingClientRect();
       const progress = Math.min(
         Math.max(-rect.top / heroIntro.offsetHeight, 0),
@@ -262,7 +259,6 @@ function initScrollAnimation() {
           progress > blurHideProgress ? 'hidden' : 'visible';
       }
 
-      // ✅ force3D: true 반드시 포함 (iOS Safari 렌더링 필수)
       if (!autoTriggered && expandingCircle) {
         mobileCircleScale = Math.min((progress / 0.6) * 12, 12);
         gsap.set(expandingCircle, { scale: mobileCircleScale, force3D: true });
@@ -290,7 +286,6 @@ function initScrollAnimation() {
       }
     }
 
-    // ✅ scroll + touchmove 둘 다 등록 (iOS 모멘텀 스크롤 대응)
     window.addEventListener('scroll', onMobileScroll, { passive: true });
     window.addEventListener('touchmove', onMobileScroll, { passive: true });
 
@@ -301,7 +296,6 @@ function initScrollAnimation() {
         autoTriggered = false;
         mobileCircleScale = 0;
 
-        // ✅ wave polygon DOM 완전히 제거 (중복 생성 방지)
         var mEl = document.getElementById('m');
         if (mEl) {
           mEl.querySelectorAll('polygon').forEach(function (p) {
@@ -320,7 +314,6 @@ function initScrollAnimation() {
           blurtext.style.opacity = '1';
           blurtext.style.visibility = 'visible';
         }
-        // blur-item 초기화
         blurItems.forEach((item) => item.classList.remove('active', 'past'));
         setTimeout(() => {
           if (blurItems[0]) blurItems[0].classList.add('active');
@@ -363,12 +356,12 @@ function initScrollAnimation() {
         pinSpacing: false,
         scrub: 0.5,
         onLeave: () => hideWave(),
+        // ✅ 수정 1: 검정화면 버그 - blur-item 애니메이션 재실행 추가
         onEnterBack: () => {
           autoTriggered = false;
           heroTl = null;
           mobileCircleScale = 0;
 
-          // ✅ wave polygon DOM 완전히 제거
           var mEl = document.getElementById('m');
           if (mEl) {
             mEl.querySelectorAll('polygon').forEach(function (p) {
@@ -387,6 +380,19 @@ function initScrollAnimation() {
             blurtext.style.visibility = 'visible';
           }
           blurItems.forEach((item) => item.classList.remove('active', 'past'));
+
+          // ✅ 이게 빠져있어서 검정 화면으로 남았던 것 - blur 애니메이션 재실행
+          setTimeout(() => {
+            if (blurItems[0]) blurItems[0].classList.add('active');
+          }, 300);
+          setTimeout(() => {
+            if (blurItems[0]) {
+              blurItems[0].classList.remove('active');
+              blurItems[0].classList.add('past');
+            }
+            if (blurItems[1]) blurItems[1].classList.add('active');
+          }, 2000);
+
           var waveWrapEl = document.querySelector('.wave-wrap');
           if (waveWrapEl) {
             waveWrapEl.style.visibility = 'visible';
@@ -960,7 +966,13 @@ class Content {
     this.DOM.buttons = el.querySelector('.content__buttons');
   }
   show() {
+    // ✅ 수정 2: 클릭할 때 해당 영상만 그때 로드 (8개 동시 로드 → 1개씩)
     var video = this.DOM.image && this.DOM.image.querySelector('video');
+    var source = video && video.querySelector('source');
+    if (source && source.dataset.src && !source.src) {
+      source.src = source.dataset.src;
+    }
+
     if (video) video.play().catch(function () {});
     this.DOM.el.classList.add('content__item--current');
     gsap.to(this.DOM.image, {
@@ -1247,16 +1259,8 @@ class Slideshow {
   }
 }
 
+// ✅ 수정 3: 비디오 미리 전체 로드 제거 (Content.show()에서 개별 로드로 변경)
 function createSlideshowWithVideoEvents() {
-  document
-    .querySelectorAll('.content__item-image video')
-    .forEach(function (video) {
-      var source = video.querySelector('source');
-      if (source && source.dataset.src && !source.src) {
-        source.src = source.dataset.src;
-        video.load();
-      }
-    });
   slideshow = new Slideshow(document.querySelector('.slideshow'));
 }
 
@@ -1495,7 +1499,8 @@ function init() {
           illWrap.style.opacity = '0';
           illWrap.style.visibility = 'hidden';
         }
-        if (!slideshow) createSlideshowWithVideoEvents();
+        // ✅ 수정 4: 100ms 지연으로 렌더링 분산 (진입 직후 렉 방지)
+        if (!slideshow) setTimeout(createSlideshowWithVideoEvents, 100);
       },
       onLeave: () => {
         if (illWrap) {
